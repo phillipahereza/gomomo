@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	collectionsTokenURL        = "/collection/token/"
-	collectionsRequestToPayURL = "/collection/v1_0/requesttopay"
-	collectionsBalanceURL      = "/collection/v1_0/account/balance"
+	collectionsTokenURL           = "/collection/token/"
+	collectionsRequestToPayURL    = "/collection/v1_0/requesttopay"
+	collectionsBalanceURL         = "/collection/v1_0/account/balance"
 	collectionsIsAccountActiveURl = "/collection/v1_0/accountholder/msisdn/"
 )
 

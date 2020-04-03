@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	disbursementsTokenURL        = "/disbursement/token/"
-	disbursementsTransferURL = "/disbursement/v1_0/transfer"
-	disbursementsBalanceURL      = "/disbursement/v1_0/account/balance"
+	disbursementsTokenURL           = "/disbursement/token/"
+	disbursementsTransferURL        = "/disbursement/v1_0/transfer"
+	disbursementsBalanceURL         = "/disbursement/v1_0/account/balance"
 	disbursementsIsAccountActiveURl = "/disbursement/v1_0/accountholder/msisdn/"
 )
 
@@ -163,4 +163,3 @@ func NewDisbursementClient(key, environment, baseURL string) *DisbursementOp {
 	c := newClient(key, environment, baseURL)
 	return &DisbursementOp{client: c}
 }
-

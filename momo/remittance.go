@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	RemittancesTokenURL        = "/remittance/token/"
-	RemittancesTransferURL = "/remittance/v1_0/transfer"
-	RemittancesBalanceURL      = "/remittance/v1_0/account/balance"
+	RemittancesTokenURL           = "/remittance/token/"
+	RemittancesTransferURL        = "/remittance/v1_0/transfer"
+	RemittancesBalanceURL         = "/remittance/v1_0/account/balance"
 	RemittancesIsAccountActiveURl = "/remittance/v1_0/accountholder/msisdn/"
 )
 
@@ -163,4 +163,3 @@ func NewRemittanceClient(key, environment, baseURL string) *RemittanceOp {
 	c := newClient(key, environment, baseURL)
 	return &RemittanceOp{client: c}
 }
-

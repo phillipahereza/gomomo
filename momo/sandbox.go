@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	sandboxURL = "https://sandbox.momodeveloper.mtn.com/"
-	stagingURL = ""
+	sandboxURL    = "https://sandbox.momodeveloper.mtn.com/"
+	stagingURL    = ""
 	productionURL = ""
 )
 
@@ -44,7 +44,7 @@ func (c *SandboxOp) CreateSandboxUser(callbackHost string) (string, error) {
 }
 
 // create user API key
-func (c *SandboxOp) GenerateSandboxUserAPIKey(referenceId string) (*APIKeyResponse, error){
+func (c *SandboxOp) GenerateSandboxUserAPIKey(referenceId string) (*APIKeyResponse, error) {
 	urlStr := fmt.Sprintf("v1_0/apiuser/%s/apikey", referenceId)
 	ctx := context.Background()
 	req, err := c.client.NewRequest(ctx, http.MethodPost, urlStr, nil)
