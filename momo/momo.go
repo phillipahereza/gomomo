@@ -15,7 +15,7 @@ const (
 	mediaType  = "application/json"
 )
 
-type Client struct {
+type momoClient struct {
 	client          *http.Client
 	BaseURL         *url.URL
 	SubscriptionKey string
@@ -30,8 +30,13 @@ type Response struct {
 	ReferenceID string
 }
 
+type tokenResponse struct {
+	AccessToken string `json:"access_token"`
+	TokenType string `json:"token_type"`
+	ExpiresIn string `json:"expires_in"`
+}
 
-func (c *Client) NewRequest(ctx context.Context, method, urlStr string, body interface{}) (*http.Request, error) {
+func (c *momoClient) NewRequest(ctx context.Context, method, urlStr string, body interface{}) (*http.Request, error) {
 	u, err := c.BaseURL.Parse(urlStr)
 	if err != nil {
 		return nil, err
@@ -61,13 +66,13 @@ func (c *Client) NewRequest(ctx context.Context, method, urlStr string, body int
 	return req, nil
 }
 
-func (c *Client) Do(ctx context.Context, req *http.Request) (*Response, error) {
+func (c *momoClient) Do(ctx context.Context, req *http.Request) (*Response, error) {
 	req.WithContext(ctx)
 	res, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	response, err := BuildResponse(res)
+	response, err := buildResponse(res)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +80,7 @@ func (c *Client) Do(ctx context.Context, req *http.Request) (*Response, error) {
 	return response, nil
 }
 
-func BuildResponse(res *http.Response) (*Response, error) {
+func buildResponse(res *http.Response) (*Response, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	response := Response{
 		StatusCode: res.StatusCode,
@@ -87,12 +92,12 @@ func BuildResponse(res *http.Response) (*Response, error) {
 	return &response, err
 }
 
-func NewClient(key, environment, baseUrl string) *Client {
+func newClient(key, environment, baseUrl string) *momoClient {
 	urlStr, err := url.Parse(baseUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return &Client{
+	return &momoClient{
 		client:          http.DefaultClient,
 		BaseURL:         urlStr,
 		SubscriptionKey: key,

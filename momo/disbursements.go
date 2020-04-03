@@ -1,6 +1,6 @@
 package momo
 
 type DisbursementsOp struct {
-	client *Client
+	client *momoClient
 }
 

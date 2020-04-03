@@ -43,7 +43,7 @@ func main() {
 }
 
 func createSandboxUserCmd(c *cli.Context) error {
-	client := momo.NewSandbox(c.String("key"))
+	client := momo.NewSandboxClient(c.String("key"))
 	refID, err := client.CreateSandboxUser(c.String("callback"))
 	if err != nil {
 		log.Fatal(err)

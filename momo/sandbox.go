@@ -10,10 +10,12 @@ import (
 
 const (
 	sandboxURL = "https://sandbox.momodeveloper.mtn.com/"
+	stagingURL = ""
+	productionURL = ""
 )
 
 type SandboxOp struct {
-	client *Client
+	client *momoClient
 }
 
 type APIKeyResponse struct {
@@ -66,7 +68,7 @@ func (c *SandboxOp) GenerateSandboxUserAPIKey(referenceId string) (*APIKeyRespon
 	return keyResponse, nil
 }
 
-func NewSandbox(key string) *SandboxOp {
-	c := NewClient(key, "sandbox", sandboxURL)
+func NewSandboxClient(key string) *SandboxOp {
+	c := newClient(key, "sandbox", sandboxURL)
 	return &SandboxOp{client: c}
 }
