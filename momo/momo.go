@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	mediaType  = "application/json"
+	mediaType = "application/json"
 )
 
 type momoClient struct {
@@ -24,16 +24,21 @@ type momoClient struct {
 }
 
 type Response struct {
-	StatusCode int
-	Body       []byte
-	Headers    map[string][]string
+	StatusCode  int
+	Body        []byte
+	Headers     map[string][]string
 	ReferenceID string
 }
 
 type tokenResponse struct {
 	AccessToken string `json:"access_token"`
-	TokenType string `json:"token_type"`
-	ExpiresIn string `json:"expires_in"`
+	TokenType   string `json:"token_type"`
+	ExpiresIn   string `json:"expires_in"`
+}
+
+type BalanceResponse struct {
+	AvailableBalance string `json:"availableBalance"`
+	Currency         string `json:"currency"`
 }
 
 func (c *momoClient) NewRequest(ctx context.Context, method, urlStr string, body interface{}) (*http.Request, error) {
@@ -59,8 +64,12 @@ func (c *momoClient) NewRequest(ctx context.Context, method, urlStr string, body
 	req.Header.Add("Accept", mediaType)
 	req.Header.Add("X-Reference-Id", uuid.New().String())
 	req.Header.Add("Ocp-Apim-Subscription-Key", c.SubscriptionKey)
+
+	if c.Environment != "" {
+		req.Header.Add("X-Target-Environment", c.Environment)
+	}
 	if c.Token != "" {
-		req.Header.Add("Authorization", "Bearer " + c.Token)
+		req.Header.Add("Authorization", "Bearer "+c.Token)
 	}
 
 	return req, nil
@@ -83,9 +92,9 @@ func (c *momoClient) Do(ctx context.Context, req *http.Request) (*Response, erro
 func buildResponse(res *http.Response) (*Response, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	response := Response{
-		StatusCode: res.StatusCode,
-		Body:       body,
-		Headers:    res.Header,
+		StatusCode:  res.StatusCode,
+		Body:        body,
+		Headers:     res.Header,
 		ReferenceID: "",
 	}
 	res.Body.Close()
