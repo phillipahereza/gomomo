@@ -168,3 +168,4 @@ Temporary Items
 .idea/modules.xml
 .idea/momoapi-go.iml
 .idea/vcs.xml
+/momoapi
