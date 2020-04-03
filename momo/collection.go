@@ -10,50 +10,30 @@ import (
 )
 
 const (
+	collectionsTokenURL        = "/collection/token/"
 	collectionsRequestToPayURL = "/collection/v1_0/requesttopay"
 	collectionsBalanceURL      = "/collection/v1_0/account/balance"
 	collectionsIsAccountActiveURl = "/collection/v1_0/accountholder/msisdn/"
 )
 
-type CollectionsOp struct {
+type CollectionService interface {
+	RequestToPay(ctx context.Context, mobile string, amount int64, id, payeeNote, payerMessage, currency string) (string, error)
+	GetTransaction(ctx context.Context, transactionID string) (*PaymentStatusResponse, error)
+	GetBalance(ctx context.Context) (*BalanceResponse, error)
+	IsPayeeActive(ctx context.Context, mobileNumber string) (bool, error)
+	GetToken(ctx context.Context) error
+}
+
+type CollectionOp struct {
 	client *momoClient
 }
 
-type payer struct {
-	PartyIDType string `json:"partyIdType"`
-	PartyID     string `json:"partyId"`
-}
-
-type requestToPayBody struct {
-	Amount       int64  `json:"amount"`
-	Currency     string `json:"currency"`
-	ExternalID   string `json:"externalId"`
-	Payee        payer  `json:"payer"`
-	PayerMessage string `json:"payerMessage"`
-	PayeeNote    string `json:"payeeNote"`
-}
-
-type Reason struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-}
-
-type CollectionStatusResponse struct {
-	Amount                 string `json:"amount,omitempty"`
-	Currency               string `json:"amount,omitempty"`
-	FinancialTransactionID string `json:"financialTransactionId,omitempty"`
-	ExternalID             string `json:"externalId,omitempty"`
-	Payer                  payer  `json:"payer,omitempty"`
-	Status                 string `json:"status,omitempty"`
-	Reason                 Reason `json:"reason,omitempty"`
-}
-
-func (c *CollectionsOp) RequestToPay(ctx context.Context, mobile string, amount int64, id, payeeNote, payerMessage, currency string) (string, error) {
+func (c *CollectionOp) RequestToPay(ctx context.Context, mobile string, amount int64, id, payeeNote, payerMessage, currency string) (string, error) {
 	if c.client.Environment == "sandbox" {
 		currency = "EUR"
 	}
 
-	requestBody := requestToPayBody{
+	requestBody := PaymentRequestBody{
 		Amount:     amount,
 		Currency:   currency,
 		ExternalID: id,
@@ -82,7 +62,7 @@ func (c *CollectionsOp) RequestToPay(ctx context.Context, mobile string, amount 
 	return req.Header.Get("X-Reference-Id"), nil
 }
 
-func (c *CollectionsOp) GetTransaction(ctx context.Context, transactionID string) (*CollectionStatusResponse, error) {
+func (c *CollectionOp) GetTransaction(ctx context.Context, transactionID string) (*PaymentStatusResponse, error) {
 	urlStr := fmt.Sprintf("%s/%s", collectionsRequestToPayURL, transactionID)
 	req, err := c.client.NewRequest(ctx, http.MethodGet, urlStr, nil)
 	if err != nil {
@@ -98,7 +78,7 @@ func (c *CollectionsOp) GetTransaction(ctx context.Context, transactionID string
 		return nil, errors.New(fmt.Sprintf("response code: %d with error %s", res.StatusCode, string(res.Body)))
 	}
 
-	status := &CollectionStatusResponse{}
+	status := &PaymentStatusResponse{}
 	err = json.Unmarshal(res.Body, status)
 	if err != nil {
 		return nil, err
@@ -106,7 +86,7 @@ func (c *CollectionsOp) GetTransaction(ctx context.Context, transactionID string
 	return status, nil
 }
 
-func (c *CollectionsOp) GetBalance(ctx context.Context) (*BalanceResponse, error) {
+func (c *CollectionOp) GetBalance(ctx context.Context) (*BalanceResponse, error) {
 	req, err := c.client.NewRequest(ctx, http.MethodGet, collectionsBalanceURL, nil)
 	if err != nil {
 		return nil, err
@@ -129,7 +109,7 @@ func (c *CollectionsOp) GetBalance(ctx context.Context) (*BalanceResponse, error
 	return balance, nil
 }
 
-func (c *CollectionsOp) IsPayeeActive(ctx context.Context, mobileNumber string) (bool, error) {
+func (c *CollectionOp) IsPayeeActive(ctx context.Context, mobileNumber string) (bool, error) {
 	urlStr := fmt.Sprintf("%s/%s/active", collectionsIsAccountActiveURl, mobileNumber)
 	req, err := c.client.NewRequest(ctx, http.MethodGet, urlStr, nil)
 	if err != nil {
@@ -148,7 +128,7 @@ func (c *CollectionsOp) IsPayeeActive(ctx context.Context, mobileNumber string) 
 	return true, nil
 }
 
-func (c *CollectionsOp) GetToken(ctx context.Context) error {
+func (c *CollectionOp) GetToken(ctx context.Context) error {
 	apiKey := os.Getenv("COLLECTION_API_KEY")
 	userID := os.Getenv("COLLECTION_USER_ID")
 	if userID == "" {
@@ -159,7 +139,7 @@ func (c *CollectionsOp) GetToken(ctx context.Context) error {
 		return errors.New("COLLECTION_API_KEY should be set in the environment")
 	}
 
-	req, err := c.client.NewRequest(ctx, http.MethodPost, "collection/token/", nil)
+	req, err := c.client.NewRequest(ctx, http.MethodPost, collectionsTokenURL, nil)
 	if err != nil {
 		return err
 	}
@@ -179,7 +159,7 @@ func (c *CollectionsOp) GetToken(ctx context.Context) error {
 	return nil
 }
 
-func NewCollectionsClient(key, environment, baseURL string) *CollectionsOp {
+func NewCollectionClient(key, environment, baseURL string) *CollectionOp {
 	c := newClient(key, environment, baseURL)
-	return &CollectionsOp{client: c}
+	return &CollectionOp{client: c}
 }

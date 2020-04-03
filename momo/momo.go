@@ -41,6 +41,35 @@ type BalanceResponse struct {
 	Currency         string `json:"currency"`
 }
 
+type payer struct {
+	PartyIDType string `json:"partyIdType"`
+	PartyID     string `json:"partyId"`
+}
+
+type PaymentRequestBody struct {
+	Amount       int64  `json:"amount"`
+	Currency     string `json:"currency"`
+	ExternalID   string `json:"externalId"`
+	Payee        payer  `json:"payer"`
+	PayerMessage string `json:"payerMessage"`
+	PayeeNote    string `json:"payeeNote"`
+}
+
+type Reason struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+type PaymentStatusResponse struct {
+	Amount                 string `json:"amount,omitempty"`
+	Currency               string `json:"amount,omitempty"`
+	FinancialTransactionID string `json:"financialTransactionId,omitempty"`
+	ExternalID             string `json:"externalId,omitempty"`
+	Payer                  payer  `json:"payer,omitempty"`
+	Status                 string `json:"status,omitempty"`
+	Reason                 Reason `json:"reason,omitempty"`
+}
+
 func (c *momoClient) NewRequest(ctx context.Context, method, urlStr string, body interface{}) (*http.Request, error) {
 	u, err := c.BaseURL.Parse(urlStr)
 	if err != nil {
