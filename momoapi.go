@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/phillipahereza/momoapi-go/momo"
 	"github.com/urfave/cli/v2"
 	"log"
 	"os"
@@ -42,6 +43,16 @@ func main() {
 }
 
 func createSandboxUserCmd(c *cli.Context) error {
-	fmt.Printf("%s - %s\n", c.String("callback"), c.String("key"))
+	client := momo.NewSandbox(c.String("key"))
+	refID, err := client.CreateSandboxUser(c.String("callback"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	apiKey, err := client.GenerateSandboxUserAPIKey(refID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("API Key: %s\n", apiKey.APIKey)
+	fmt.Printf("User ID: %s\n", refID)
 	return nil
 }
