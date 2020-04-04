@@ -23,7 +23,6 @@ type CollectionService interface {
 	GetBalance(ctx context.Context) (*BalanceResponse, error)
 	IsPayeeActive(ctx context.Context, mobileNumber string) (bool, error)
 	GetToken(ctx context.Context, apiKey, userID string) (string, error)
-	DoNothing() string
 }
 
 type CollectionServiceOp struct {
@@ -158,8 +157,4 @@ func (c *CollectionServiceOp) GetToken(ctx context.Context, apiKey, userID strin
 	}
 	c.client.Token = token.AccessToken
 	return token.AccessToken, nil
-}
-
-func(c *CollectionServiceOp) DoNothing() string {
-	return "testing do nothing"
 }
