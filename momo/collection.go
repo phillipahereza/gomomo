@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
-	"os"
+	"strconv"
 )
 
 const (
@@ -21,14 +22,17 @@ type CollectionService interface {
 	GetTransaction(ctx context.Context, transactionID string) (*PaymentStatusResponse, error)
 	GetBalance(ctx context.Context) (*BalanceResponse, error)
 	IsPayeeActive(ctx context.Context, mobileNumber string) (bool, error)
-	GetToken(ctx context.Context) error
+	GetToken(ctx context.Context, apiKey, userID string) (string, error)
+	DoNothing() string
 }
 
-type CollectionOp struct {
-	client *momoClient
+type CollectionServiceOp struct {
+	client *Client
 }
 
-func (c *CollectionOp) RequestToPay(ctx context.Context, mobile string, amount int64, id, payeeNote, payerMessage, currency string) (string, error) {
+var _ CollectionService= &CollectionServiceOp{}
+
+func (c *CollectionServiceOp) RequestToPay(ctx context.Context, mobile string, amount int64, id, payeeNote, payerMessage, currency string) (string, error) {
 	if c.client.Environment == "sandbox" {
 		currency = "EUR"
 	}
@@ -46,12 +50,15 @@ func (c *CollectionOp) RequestToPay(ctx context.Context, mobile string, amount i
 	}
 
 	req, err := c.client.NewRequest(ctx, http.MethodPost, collectionsRequestToPayURL, requestBody)
+	transactionID := req.Header.Get("X-Reference-Id")
+
 	if err != nil {
 		return "", err
 	}
 
 	res, err := c.client.Do(ctx, req)
 	if err != nil {
+		log.Println(string(res.Body))
 		return "", err
 	}
 
@@ -59,10 +66,10 @@ func (c *CollectionOp) RequestToPay(ctx context.Context, mobile string, amount i
 		return "", errors.New(fmt.Sprintf("response code: %d with error %s", res.StatusCode, string(res.Body)))
 	}
 
-	return req.Header.Get("X-Reference-Id"), nil
+	return transactionID, nil
 }
 
-func (c *CollectionOp) GetTransaction(ctx context.Context, transactionID string) (*PaymentStatusResponse, error) {
+func (c *CollectionServiceOp) GetTransaction(ctx context.Context, transactionID string) (*PaymentStatusResponse, error) {
 	urlStr := fmt.Sprintf("%s/%s", collectionsRequestToPayURL, transactionID)
 	req, err := c.client.NewRequest(ctx, http.MethodGet, urlStr, nil)
 	if err != nil {
@@ -86,7 +93,7 @@ func (c *CollectionOp) GetTransaction(ctx context.Context, transactionID string)
 	return status, nil
 }
 
-func (c *CollectionOp) GetBalance(ctx context.Context) (*BalanceResponse, error) {
+func (c *CollectionServiceOp) GetBalance(ctx context.Context) (*BalanceResponse, error) {
 	req, err := c.client.NewRequest(ctx, http.MethodGet, collectionsBalanceURL, nil)
 	if err != nil {
 		return nil, err
@@ -109,7 +116,7 @@ func (c *CollectionOp) GetBalance(ctx context.Context) (*BalanceResponse, error)
 	return balance, nil
 }
 
-func (c *CollectionOp) IsPayeeActive(ctx context.Context, mobileNumber string) (bool, error) {
+func (c *CollectionServiceOp) IsPayeeActive(ctx context.Context, mobileNumber string) (bool, error) {
 	urlStr := fmt.Sprintf("%s/%s/active", collectionsIsAccountActiveURl, mobileNumber)
 	req, err := c.client.NewRequest(ctx, http.MethodGet, urlStr, nil)
 	if err != nil {
@@ -128,38 +135,31 @@ func (c *CollectionOp) IsPayeeActive(ctx context.Context, mobileNumber string) (
 	return true, nil
 }
 
-func (c *CollectionOp) GetToken(ctx context.Context) error {
-	apiKey := os.Getenv("COLLECTION_API_KEY")
-	userID := os.Getenv("COLLECTION_USER_ID")
-	if userID == "" {
-		return errors.New("COLLECTION_USER_ID should be set in the environment")
-	}
-
-	if apiKey == "" {
-		return errors.New("COLLECTION_API_KEY should be set in the environment")
-	}
-
+func (c *CollectionServiceOp) GetToken(ctx context.Context, apiKey, userID string) (string, error) {
 	req, err := c.client.NewRequest(ctx, http.MethodPost, collectionsTokenURL, nil)
 	if err != nil {
-		return err
+		return "", err
 	}
 	req.SetBasicAuth(userID, apiKey)
 
 	res, err := c.client.Do(ctx, req)
 	if err != nil {
-		return err
+		return "", err
+	}
+	if res.StatusCode != http.StatusOK {
+		code := strconv.Itoa(res.StatusCode)
+		return "", errors.New("status Code received is " + code)
 	}
 	token := &tokenResponse{}
 
 	err = json.Unmarshal(res.Body, token)
 	if err != nil {
-		return err
+		return "", err
 	}
 	c.client.Token = token.AccessToken
-	return nil
+	return token.AccessToken, nil
 }
 
-func NewCollectionClient(key, environment, baseURL string) *CollectionOp {
-	c := newClient(key, environment, baseURL)
-	return &CollectionOp{client: c}
+func(c *CollectionServiceOp) DoNothing() string {
+	return "testing do nothing"
 }

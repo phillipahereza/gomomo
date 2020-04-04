@@ -15,7 +15,7 @@ const (
 )
 
 type SandboxOp struct {
-	client *momoClient
+	client *Client
 }
 
 type APIKeyResponse struct {
@@ -68,7 +68,3 @@ func (c *SandboxOp) GenerateSandboxUserAPIKey(referenceId string) (*APIKeyRespon
 	return keyResponse, nil
 }
 
-func NewSandboxClient(key string) *SandboxOp {
-	c := newClient(key, "sandbox", sandboxURL)
-	return &SandboxOp{client: c}
-}

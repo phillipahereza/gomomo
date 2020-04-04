@@ -25,7 +25,7 @@ type DisbursementService interface {
 }
 
 type DisbursementOp struct {
-	client *momoClient
+	client *Client
 }
 
 func (c *DisbursementOp) GetBalance(ctx context.Context) (*BalanceResponse, error) {
@@ -157,9 +157,4 @@ func (c *DisbursementOp) GetTransfer(ctx context.Context, transferID string) (*P
 		return nil, err
 	}
 	return status, nil
-}
-
-func NewDisbursementClient(key, environment, baseURL string) *DisbursementOp {
-	c := newClient(key, environment, baseURL)
-	return &DisbursementOp{client: c}
 }

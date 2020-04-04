@@ -15,12 +15,15 @@ const (
 	mediaType = "application/json"
 )
 
-type momoClient struct {
+type Client struct {
 	client          *http.Client
 	BaseURL         *url.URL
 	SubscriptionKey string
 	Token           string
 	Environment     string
+	Collection      CollectionService
+	Disbursement    DisbursementService
+	Remittance      RemittanceService
 }
 
 type Response struct {
@@ -33,7 +36,7 @@ type Response struct {
 type tokenResponse struct {
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
-	ExpiresIn   string `json:"expires_in"`
+	ExpiresIn   int64 `json:"expires_in"`
 }
 
 type BalanceResponse struct {
@@ -62,15 +65,15 @@ type Reason struct {
 
 type PaymentStatusResponse struct {
 	Amount                 string `json:"amount,omitempty"`
-	Currency               string `json:"amount,omitempty"`
-	FinancialTransactionID string `json:"financialTransactionId,omitempty"`
+	Currency               string `json:"currency,omitempty"`
+	FinancialTransactionID int64 `json:"financialTransactionId,omitempty"`
 	ExternalID             string `json:"externalId,omitempty"`
 	Payer                  payer  `json:"payer,omitempty"`
 	Status                 string `json:"status,omitempty"`
-	Reason                 Reason `json:"reason,omitempty"`
+	Reason                 string `json:"reason,omitempty"`
 }
 
-func (c *momoClient) NewRequest(ctx context.Context, method, urlStr string, body interface{}) (*http.Request, error) {
+func (c *Client) NewRequest(ctx context.Context, method, urlStr string, body interface{}) (*http.Request, error) {
 	u, err := c.BaseURL.Parse(urlStr)
 	if err != nil {
 		return nil, err
@@ -90,7 +93,6 @@ func (c *momoClient) NewRequest(ctx context.Context, method, urlStr string, body
 	}
 
 	req.Header.Add("Content-Type", mediaType)
-	req.Header.Add("Accept", mediaType)
 	req.Header.Add("X-Reference-Id", uuid.New().String())
 	req.Header.Add("Ocp-Apim-Subscription-Key", c.SubscriptionKey)
 
@@ -104,7 +106,7 @@ func (c *momoClient) NewRequest(ctx context.Context, method, urlStr string, body
 	return req, nil
 }
 
-func (c *momoClient) Do(ctx context.Context, req *http.Request) (*Response, error) {
+func (c *Client) Do(ctx context.Context, req *http.Request) (*Response, error) {
 	req.WithContext(ctx)
 	res, err := c.client.Do(req)
 	if err != nil {
@@ -130,16 +132,20 @@ func buildResponse(res *http.Response) (*Response, error) {
 	return &response, err
 }
 
-func newClient(key, environment, baseUrl string) *momoClient {
+func NewClient(key, environment, baseUrl string) *Client {
 	urlStr, err := url.Parse(baseUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return &momoClient{
+	c := &Client{
 		client:          http.DefaultClient,
 		BaseURL:         urlStr,
 		SubscriptionKey: key,
 		Token:           "",
 		Environment:     environment,
 	}
+	c.Collection = &CollectionServiceOp{client: c}
+	c.Disbursement = &DisbursementOp{client: c}
+	c.Remittance = &RemittanceOp{client: c}
+	return c
 }

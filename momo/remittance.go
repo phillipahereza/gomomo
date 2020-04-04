@@ -25,7 +25,7 @@ type RemittanceService interface {
 }
 
 type RemittanceOp struct {
-	client *momoClient
+	client *Client
 }
 
 func (c *RemittanceOp) GetBalance(ctx context.Context) (*BalanceResponse, error) {
@@ -157,9 +157,4 @@ func (c *RemittanceOp) GetTransfer(ctx context.Context, transferID string) (*Pay
 		return nil, err
 	}
 	return status, nil
-}
-
-func NewRemittanceClient(key, environment, baseURL string) *RemittanceOp {
-	c := newClient(key, environment, baseURL)
-	return &RemittanceOp{client: c}
 }
