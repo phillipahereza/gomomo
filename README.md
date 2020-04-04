@@ -2,6 +2,14 @@
 
 <strong>Power your apps with our MTN MoMo API</strong>
 
+<div>
+  Join the active, engaged community: <br>
+  <a href="https://momodeveloper.mtn.com/">Website</a>
+  <span> | </span>
+  <a href="https://spectrum.chat/momo-api-developers/">Spectrum</a>
+  <br>
+</div>
+
 # Usage
 
 ## Installation
