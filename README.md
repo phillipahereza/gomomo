@@ -83,10 +83,11 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Printf("%+v\n", status)
-
+    
+    // Get balance endpoint on sandbox is flaky, returns a different response every time is called
 	balance, err := client.Collection.GetBalance(ctx)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	fmt.Printf("%+v", balance)
 
@@ -97,3 +98,136 @@ func main() {
 	fmt.Println(active)
 }
 ```
+
+### Methods
+
+1. `RequestToPay`: This operation is used to request a payment from a consumer (Payer). The payer will be asked to authorize the payment. The transaction is executed once the payer has authorized the payment. The transaction will be in status PENDING until it is authorized or declined by the payer or it is timed out by the system.
+
+2. `GetTransaction`: Retrieve transaction information using the `transactionId` returned by `RequestToPay`. You can invoke it at intervals until the transaction fails or succeeds. If the transaction has failed, it will throw an appropriate error. 
+
+3. `GetBalance`: Get the balance of the account.
+
+4. `IsPayerActive`: check if an account holder is registered and active in the system.
+
+
+## Disbursement
+
+* `disbursementPK`: Primary Key for the `Disbursement` product on the developer portal.
+
+An example of how to use the `Disbursement` product:
+
+```go
+func main() {
+	disbursementPK := "50ff0a2926784599a8409f263a5cca6c"
+	userID := "757e5ab2-88f6-413c-9d6b-3399560aa1df"
+	apiKey := "b58e05c2ada542068e9dedbc64663c43"
+
+	ctx := context.Background()
+
+	disbursementClient := momo.NewClient(disbursementPK, "sandbox", "https://sandbox.momodeveloper.mtn.com/")
+	_, err := disbursementClient.Disbursement.GetToken(ctx, apiKey, userID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	balance, err := disbursementClient.Disbursement.GetBalance(ctx)
+	if err != nil {
+		log.Println(err)
+	} else {
+		fmt.Printf("%+v\n", balance)
+	}
+
+	active, err := disbursementClient.Disbursement.IsPayeeActive(ctx, "256789997290")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("Payee is Active: %v\n", active)
+
+	transactionID, err := disbursementClient.Disbursement.Transfer(ctx, "46733123453", 500, "2323", "", "", "EUR")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	status, err := disbursementClient.Disbursement.GetTransfer(ctx, transactionID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%+v\n", status)
+
+}
+```
+
+### Methods
+
+1. `Transfer`: This operation is used to transfer an amount from the owner’s account to a payee account. The payer will be asked to authorize the payment. The transaction is executed once the payer has authorized the payment. The transaction will be in status PENDING until it is authorized or declined by the payer or it is timed out by the system.
+
+2. `GetTransfer`: Retrieve transfer information using the `transactionId` returned by `Transfer`. You can invoke it at intervals until the transaction fails or succeeds. If the transaction has failed, it will throw an appropriate error. 
+
+3. `GetBalance`: Get the balance of the account.
+
+4. `IsPayerActive`: check if an account holder is registered and active in the system.
+
+## Remittance
+
+* `remittancePK`: Primary Key for the `Remittance` product on the developer portal.
+
+An example of how to use the `Remittance` product:
+```go
+func main() {
+	remittancePK := "24f5444da2c74fb59e6e4de50798db5d"
+	userID := "712db4b5-f079-47bf-843b-c86f6784ebe0"
+	apiKey := "3a8723537dc04729a83c1b7a09cc4e54"
+
+	ctx := context.Background()
+
+	remittanceClient := momo.NewClient(remittancePK, "sandbox", "https://sandbox.momodeveloper.mtn.com/")
+	_, err := remittanceClient.Remittance.GetToken(ctx, apiKey, userID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	balance, err := remittanceClient.Remittance.GetBalance(ctx)
+	if err != nil {
+		log.Println(err)
+	} else {
+		fmt.Printf("%+v\n", balance)
+	}
+
+	active, err := remittanceClient.Remittance.IsPayeeActive(ctx, "256789997290")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("Payee is Active: %v\n", active)
+
+	transactionID, err := remittanceClient.Remittance.Transfer(ctx, "46733123453", 500, "2323", "", "", "EUR")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	status, err := remittanceClient.Remittance.GetTransfer(ctx, transactionID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%+v\n", status)
+
+}
+```
+
+## License
+
+GNU GPLv3
+
+Copyright (C) 2020 Phillip Ahereza
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.

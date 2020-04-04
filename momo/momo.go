@@ -24,6 +24,7 @@ type Client struct {
 	Collection      CollectionService
 	Disbursement    DisbursementService
 	Remittance      RemittanceService
+	Sandbox         SandboxService
 }
 
 type Response struct {
@@ -44,18 +45,27 @@ type BalanceResponse struct {
 	Currency         string `json:"currency"`
 }
 
-type payer struct {
+type paymentDetails struct {
 	PartyIDType string `json:"partyIdType"`
 	PartyID     string `json:"partyId"`
 }
 
 type PaymentRequestBody struct {
-	Amount       int64  `json:"amount"`
-	Currency     string `json:"currency"`
-	ExternalID   string `json:"externalId"`
-	Payee        payer  `json:"payer"`
-	PayerMessage string `json:"payerMessage"`
-	PayeeNote    string `json:"payeeNote"`
+	Amount       int64          `json:"amount"`
+	Currency     string         `json:"currency"`
+	ExternalID   string         `json:"externalId"`
+	Payer        paymentDetails `json:"payer"`
+	PayerMessage string         `json:"payerMessage"`
+	PayeeNote    string         `json:"payeeNote"`
+}
+
+type TransferRequestBody struct {
+	Amount       int64          `json:"amount"`
+	Currency     string         `json:"currency"`
+	ExternalID   string         `json:"externalId"`
+	Payee        paymentDetails `json:"payee"`
+	PayerMessage string         `json:"payerMessage"`
+	PayeeNote    string         `json:"payeeNote"`
 }
 
 type Reason struct {
@@ -64,13 +74,13 @@ type Reason struct {
 }
 
 type PaymentStatusResponse struct {
-	Amount                 string `json:"amount,omitempty"`
-	Currency               string `json:"currency,omitempty"`
-	FinancialTransactionID int64 `json:"financialTransactionId,omitempty"`
-	ExternalID             string `json:"externalId,omitempty"`
-	Payer                  payer  `json:"payer,omitempty"`
-	Status                 string `json:"status,omitempty"`
-	Reason                 string `json:"reason,omitempty"`
+	Amount                 string         `json:"amount,omitempty"`
+	Currency               string         `json:"currency,omitempty"`
+	FinancialTransactionID int64          `json:"financialTransactionId,omitempty"`
+	ExternalID             string         `json:"externalId,omitempty"`
+	Payer                  paymentDetails `json:"paymentDetails,omitempty"`
+	Status                 string         `json:"status,omitempty"`
+	Reason                 string         `json:"reason,omitempty"`
 }
 
 func (c *Client) NewRequest(ctx context.Context, method, urlStr string, body interface{}) (*http.Request, error) {

@@ -8,14 +8,13 @@ import (
 	"net/http"
 )
 
-const (
-	sandboxURL    = "https://sandbox.momodeveloper.mtn.com/"
-	stagingURL    = ""
-	productionURL = ""
-)
-
 type SandboxOp struct {
 	client *Client
+}
+
+type SandboxService interface {
+	CreateSandboxUser(callbackHost string) (string, error)
+	GenerateSandboxUserAPIKey(referenceId string) (*APIKeyResponse, error)
 }
 
 type APIKeyResponse struct {

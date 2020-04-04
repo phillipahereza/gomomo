@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 )
 
 const (
@@ -17,11 +16,11 @@ const (
 )
 
 type DisbursementService interface {
-	Transfer(ctx context.Context, mobile string, amount int64, id, payeeNote, payerMessage, currency string) (string, error)
+	Transfer(ctx context.Context, mobileNumber string, amount int64, id, payeeNote, payerMessage, currency string) (string, error)
 	GetTransfer(ctx context.Context, transactionID string) (*PaymentStatusResponse, error)
 	GetBalance(ctx context.Context) (*BalanceResponse, error)
 	IsPayeeActive(ctx context.Context, mobileNumber string) (bool, error)
-	GetToken(ctx context.Context) error
+	GetToken(ctx context.Context, apiKey, userID string) (string, error)
 }
 
 type DisbursementOp struct {
@@ -70,49 +69,40 @@ func (c *DisbursementOp) IsPayeeActive(ctx context.Context, mobileNumber string)
 	return true, nil
 }
 
-func (c *DisbursementOp) GetToken(ctx context.Context) error {
-	apiKey := os.Getenv("COLLECTION_API_KEY")
-	userID := os.Getenv("COLLECTION_USER_ID")
-	if userID == "" {
-		return errors.New("COLLECTION_USER_ID should be set in the environment")
-	}
-
-	if apiKey == "" {
-		return errors.New("COLLECTION_API_KEY should be set in the environment")
-	}
+func (c *DisbursementOp) GetToken (ctx context.Context, apiKey, userID string) (string, error) {
 
 	req, err := c.client.NewRequest(ctx, http.MethodPost, disbursementsTokenURL, nil)
 	if err != nil {
-		return err
+		return "", err
 	}
 	req.SetBasicAuth(userID, apiKey)
 
 	res, err := c.client.Do(ctx, req)
 	if err != nil {
-		return err
+		return "", err
 	}
 	token := &tokenResponse{}
 
 	err = json.Unmarshal(res.Body, token)
 	if err != nil {
-		return err
+		return "", err
 	}
 	c.client.Token = token.AccessToken
-	return nil
+	return token.AccessToken, err
 }
 
-func (c *DisbursementOp) Transfer(ctx context.Context, mobile string, amount int64, id, payeeNote, payerMessage, currency string) (string, error) {
+func (c *DisbursementOp) Transfer(ctx context.Context, mobileNumber string, amount int64, id, payeeNote, payerMessage, currency string) (string, error) {
 	if c.client.Environment == "sandbox" {
 		currency = "EUR"
 	}
 
-	requestBody := PaymentRequestBody{
+	requestBody := TransferRequestBody{
 		Amount:     amount,
 		Currency:   currency,
 		ExternalID: id,
-		Payee: payer{
+		Payee: paymentDetails{
 			PartyIDType: "MSISDN",
-			PartyID:     mobile,
+			PartyID:     mobileNumber,
 		},
 		PayerMessage: payerMessage,
 		PayeeNote:    payeeNote,

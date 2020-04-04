@@ -40,7 +40,7 @@ func (c *CollectionServiceOp) RequestToPay(ctx context.Context, mobile string, a
 		Amount:     amount,
 		Currency:   currency,
 		ExternalID: id,
-		Payee: payer{
+		Payer: paymentDetails{
 			PartyIDType: "MSISDN",
 			PartyID:     mobile,
 		},
