@@ -127,7 +127,7 @@ func TestCollectionServiceOp_GetBalance(t *testing.T) {
 
 }
 
-func TestDisbursementServiceOp_IsPayeeActive(t *testing.T) {
+func TestCollectionServiceOp_IsPayeeActive(t *testing.T) {
 	setup()
 	defer teardown()
 	mobileNumber := "256789997290"
