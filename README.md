@@ -7,7 +7,7 @@
   <a href="https://momodeveloper.mtn.com/">Website</a>
   <span> | </span>
   <a href="https://spectrum.chat/momo-api-developers/">Spectrum</a>
-  <br>
+  <br><br>
 </div>
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/phillipahereza/momoapi-go)](https://goreportcard.com/badge/github.com/phillipahereza/momoapi-go)
@@ -25,9 +25,15 @@
 
 ## Creating a sandbox environment API user 
 
-Next, we need to get the `User ID` and `User Secret` and to do this we shall need to use the Primary Key for the Product to which we are subscribed, as well as specify a host. This package ships with a CLI tool that helps to create sandbox credentials. 
+Next, we need to get the `User ID` and `User Secret` and to do this we shall need to use the Primary Key for the Product to which we are subscribed, as well as specify a host. 
+This package ships with a CLI tool that helps to create sandbox credentials. 
 It assumes you have created an account on `https://momodeveloper.mtn.com` and have your `Ocp-Apim-Subscription-Key`. 
 
+To install the CLI
+```bash
+go get github.com/phillipahereza/gomomo/cmd/momocli 
+```
+Then run the following command to create a sandbox user and get their API key
 ```bash
 $ momocli sandbox -callback http://ahereza.dev -key 0d31d966e5674a999c82772aa95f2cca
 ```
