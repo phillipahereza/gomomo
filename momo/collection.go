@@ -14,9 +14,11 @@ const (
 	collectionsTokenURL           = "/collection/token/"
 	collectionsRequestToPayURL    = "/collection/v1_0/requesttopay"
 	collectionsBalanceURL         = "/collection/v1_0/account/balance"
-	collectionsIsAccountActiveURl = "/collection/v1_0/accountholder/msisdn/"
+	collectionsIsAccountActiveURL = "/collection/v1_0/accountholder/msisdn/"
 )
 
+// CollectionService handles communication with Collection related methods of the
+// Momo API to enable remote collections of bills, fees or taxes
 type CollectionService interface {
 	RequestToPay(ctx context.Context, mobile string, amount int64, id, payeeNote, payerMessage, currency string) (string, error)
 	GetTransaction(ctx context.Context, transactionID string) (*PaymentStatusResponse, error)
@@ -25,18 +27,21 @@ type CollectionService interface {
 	GetToken(ctx context.Context, apiKey, userID string) (string, error)
 }
 
+// CollectionServiceOp handles communication with the collection related methods of the
+// Momo API.
 type CollectionServiceOp struct {
 	client *Client
 }
 
-var _ CollectionService= &CollectionServiceOp{}
+var _ CollectionService = &CollectionServiceOp{}
 
+// RequestToPay is used to request a payment from a consumer (Payer).
 func (c *CollectionServiceOp) RequestToPay(ctx context.Context, mobile string, amount int64, id, payeeNote, payerMessage, currency string) (string, error) {
 	if c.client.Environment == "sandbox" {
 		currency = "EUR"
 	}
 
-	requestBody := PaymentRequestBody{
+	requestBody := paymentRequestBody{
 		Amount:     amount,
 		Currency:   currency,
 		ExternalID: id,
@@ -62,12 +67,13 @@ func (c *CollectionServiceOp) RequestToPay(ctx context.Context, mobile string, a
 	}
 
 	if res.StatusCode != http.StatusAccepted {
-		return "", errors.New(fmt.Sprintf("response code: %d with error %s", res.StatusCode, string(res.Body)))
+		return "", fmt.Errorf("response code: %d with error %s", res.StatusCode, string(res.Body))
 	}
 
 	return transactionID, nil
 }
 
+// GetTransaction retrieves transaction information using the transactionId returned by RequestToPay
 func (c *CollectionServiceOp) GetTransaction(ctx context.Context, transactionID string) (*PaymentStatusResponse, error) {
 	urlStr := fmt.Sprintf("%s/%s", collectionsRequestToPayURL, transactionID)
 	req, err := c.client.NewRequest(ctx, http.MethodGet, urlStr, nil)
@@ -81,7 +87,7 @@ func (c *CollectionServiceOp) GetTransaction(ctx context.Context, transactionID 
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return nil, errors.New(fmt.Sprintf("response code: %d with error %s", res.StatusCode, string(res.Body)))
+		return nil, fmt.Errorf("response code: %d with error %s", res.StatusCode, string(res.Body))
 	}
 
 	status := &PaymentStatusResponse{}
@@ -92,6 +98,7 @@ func (c *CollectionServiceOp) GetTransaction(ctx context.Context, transactionID 
 	return status, nil
 }
 
+// GetBalance returns the balance of the account
 func (c *CollectionServiceOp) GetBalance(ctx context.Context) (*BalanceResponse, error) {
 	req, err := c.client.NewRequest(ctx, http.MethodGet, collectionsBalanceURL, nil)
 	if err != nil {
@@ -104,7 +111,7 @@ func (c *CollectionServiceOp) GetBalance(ctx context.Context) (*BalanceResponse,
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return nil, errors.New(fmt.Sprintf("response code: %d with error %s", res.StatusCode, string(res.Body)))
+		return nil, fmt.Errorf("response code: %d with error %s", res.StatusCode, string(res.Body))
 	}
 
 	balance := &BalanceResponse{}
@@ -115,8 +122,9 @@ func (c *CollectionServiceOp) GetBalance(ctx context.Context) (*BalanceResponse,
 	return balance, nil
 }
 
+// IsPayeeActive checks if an account holder is registered and active in the system
 func (c *CollectionServiceOp) IsPayeeActive(ctx context.Context, mobileNumber string) (bool, error) {
-	urlStr := fmt.Sprintf("%s/%s/active", collectionsIsAccountActiveURl, mobileNumber)
+	urlStr := fmt.Sprintf("%s/%s/active", collectionsIsAccountActiveURL, mobileNumber)
 	req, err := c.client.NewRequest(ctx, http.MethodGet, urlStr, nil)
 	if err != nil {
 		return false, err
@@ -128,12 +136,13 @@ func (c *CollectionServiceOp) IsPayeeActive(ctx context.Context, mobileNumber st
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return false, errors.New(fmt.Sprintf("response code: %d with error %s", res.StatusCode, string(res.Body)))
+		return false, fmt.Errorf("response code: %d with error %s", res.StatusCode, string(res.Body))
 	}
 
 	return true, nil
 }
 
+// GetToken creates an access token which can then be used to authorize and authenticate towards the other end-points of the Collections API
 func (c *CollectionServiceOp) GetToken(ctx context.Context, apiKey, userID string) (string, error) {
 	req, err := c.client.NewRequest(ctx, http.MethodPost, collectionsTokenURL, nil)
 	if err != nil {

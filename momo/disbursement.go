@@ -3,7 +3,6 @@ package momo
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 )
@@ -12,9 +11,11 @@ const (
 	disbursementsTokenURL           = "/disbursement/token/"
 	disbursementsTransferURL        = "/disbursement/v1_0/transfer"
 	disbursementsBalanceURL         = "/disbursement/v1_0/account/balance"
-	disbursementsIsAccountActiveURl = "/disbursement/v1_0/accountholder/msisdn/"
+	disbursementsIsAccountActiveURL = "/disbursement/v1_0/accountholder/msisdn/"
 )
 
+// DisbursementService handles communication with Disbursement related methods of the
+// Momo API to automatically deposit funds into multiple users accounts
 type DisbursementService interface {
 	Transfer(ctx context.Context, mobileNumber string, amount int64, id, payeeNote, payerMessage, currency string) (string, error)
 	GetTransfer(ctx context.Context, transactionID string) (*PaymentStatusResponse, error)
@@ -23,11 +24,13 @@ type DisbursementService interface {
 	GetToken(ctx context.Context, apiKey, userID string) (string, error)
 }
 
-type DisbursementOp struct {
+// DisbursementServiceOp handles communication with the Disbursement related methods of the Momo API.
+type DisbursementServiceOp struct {
 	client *Client
 }
 
-func (c *DisbursementOp) GetBalance(ctx context.Context) (*BalanceResponse, error) {
+// GetBalance returns the balance of the account
+func (c *DisbursementServiceOp) GetBalance(ctx context.Context) (*BalanceResponse, error) {
 	req, err := c.client.NewRequest(ctx, http.MethodGet, disbursementsBalanceURL, nil)
 	if err != nil {
 		return nil, err
@@ -39,7 +42,7 @@ func (c *DisbursementOp) GetBalance(ctx context.Context) (*BalanceResponse, erro
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return nil, errors.New(fmt.Sprintf("response code: %d with error %s", res.StatusCode, string(res.Body)))
+		return nil, fmt.Errorf("response code: %d with error %s", res.StatusCode, string(res.Body))
 	}
 
 	balance := &BalanceResponse{}
@@ -50,8 +53,9 @@ func (c *DisbursementOp) GetBalance(ctx context.Context) (*BalanceResponse, erro
 	return balance, nil
 }
 
-func (c *DisbursementOp) IsPayeeActive(ctx context.Context, mobileNumber string) (bool, error) {
-	urlStr := fmt.Sprintf("%s/%s/active", disbursementsIsAccountActiveURl, mobileNumber)
+// IsPayeeActive checks if an account holder is registered and active in the system
+func (c *DisbursementServiceOp) IsPayeeActive(ctx context.Context, mobileNumber string) (bool, error) {
+	urlStr := fmt.Sprintf("%s/%s/active", disbursementsIsAccountActiveURL, mobileNumber)
 	req, err := c.client.NewRequest(ctx, http.MethodGet, urlStr, nil)
 	if err != nil {
 		return false, err
@@ -63,13 +67,14 @@ func (c *DisbursementOp) IsPayeeActive(ctx context.Context, mobileNumber string)
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return false, errors.New(fmt.Sprintf("response code: %d with error %s", res.StatusCode, string(res.Body)))
+		return false, fmt.Errorf("response code: %d with error %s", res.StatusCode, string(res.Body))
 	}
 
 	return true, nil
 }
 
-func (c *DisbursementOp) GetToken (ctx context.Context, apiKey, userID string) (string, error) {
+// GetToken creates an access token which can then be used to authorize and authenticate towards the other end-points of the Disbursement API
+func (c *DisbursementServiceOp) GetToken(ctx context.Context, apiKey, userID string) (string, error) {
 
 	req, err := c.client.NewRequest(ctx, http.MethodPost, disbursementsTokenURL, nil)
 	if err != nil {
@@ -91,12 +96,13 @@ func (c *DisbursementOp) GetToken (ctx context.Context, apiKey, userID string) (
 	return token.AccessToken, err
 }
 
-func (c *DisbursementOp) Transfer(ctx context.Context, mobileNumber string, amount int64, id, payeeNote, payerMessage, currency string) (string, error) {
+// Transfer operation is used to transfer an amount from the owner’s account to a payee account.
+func (c *DisbursementServiceOp) Transfer(ctx context.Context, mobileNumber string, amount int64, id, payeeNote, payerMessage, currency string) (string, error) {
 	if c.client.Environment == "sandbox" {
 		currency = "EUR"
 	}
 
-	requestBody := TransferRequestBody{
+	requestBody := transferRequestBody{
 		Amount:     amount,
 		Currency:   currency,
 		ExternalID: id,
@@ -119,13 +125,14 @@ func (c *DisbursementOp) Transfer(ctx context.Context, mobileNumber string, amou
 	}
 
 	if res.StatusCode != http.StatusAccepted {
-		return "", errors.New(fmt.Sprintf("response code: %d with error %s", res.StatusCode, string(res.Body)))
+		return "", fmt.Errorf("response code: %d with error %s", res.StatusCode, string(res.Body))
 	}
 
 	return req.Header.Get("X-Reference-Id"), nil
 }
 
-func (c *DisbursementOp) GetTransfer(ctx context.Context, transferID string) (*PaymentStatusResponse, error) {
+// GetTransfer retrieves transfer information using the transactionId returned by Transfer
+func (c *DisbursementServiceOp) GetTransfer(ctx context.Context, transferID string) (*PaymentStatusResponse, error) {
 	urlStr := fmt.Sprintf("%s/%s", disbursementsTransferURL, transferID)
 	req, err := c.client.NewRequest(ctx, http.MethodGet, urlStr, nil)
 	if err != nil {
@@ -138,7 +145,7 @@ func (c *DisbursementOp) GetTransfer(ctx context.Context, transferID string) (*P
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return nil, errors.New(fmt.Sprintf("response code: %d with error %s", res.StatusCode, string(res.Body)))
+		return nil, fmt.Errorf("response code: %d with error %s", res.StatusCode, string(res.Body))
 	}
 
 	status := &PaymentStatusResponse{}

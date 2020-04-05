@@ -3,18 +3,19 @@ package momo
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 )
 
 const (
-	RemittancesTokenURL           = "/remittance/token/"
-	RemittancesTransferURL        = "/remittance/v1_0/transfer"
-	RemittancesBalanceURL         = "/remittance/v1_0/account/balance"
-	RemittancesIsAccountActiveURl = "/remittance/v1_0/accountholder/msisdn/"
+	remittancesTokenURL           = "/remittance/token/"
+	remittancesTransferURL        = "/remittance/v1_0/transfer"
+	remittancesBalanceURL         = "/remittance/v1_0/account/balance"
+	remittancesIsAccountActiveURL = "/remittance/v1_0/accountholder/msisdn/"
 )
 
+// RemittanceService handles communication with Remittance related methods of the
+// Momo API to remit funds to local recipients from the diaspora
 type RemittanceService interface {
 	Transfer(ctx context.Context, mobile string, amount int64, id, payeeNote, payerMessage, currency string) (string, error)
 	GetTransfer(ctx context.Context, transactionID string) (*PaymentStatusResponse, error)
@@ -23,12 +24,14 @@ type RemittanceService interface {
 	GetToken(ctx context.Context, apiKey, userID string) (string, error)
 }
 
-type RemittanceOp struct {
+// RemittanceServiceOp handles communication with the Remittance related methods of the Momo API.
+type RemittanceServiceOp struct {
 	client *Client
 }
 
-func (c *RemittanceOp) GetBalance(ctx context.Context) (*BalanceResponse, error) {
-	req, err := c.client.NewRequest(ctx, http.MethodGet, RemittancesBalanceURL, nil)
+// GetBalance returns the balance of the account
+func (c *RemittanceServiceOp) GetBalance(ctx context.Context) (*BalanceResponse, error) {
+	req, err := c.client.NewRequest(ctx, http.MethodGet, remittancesBalanceURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +42,7 @@ func (c *RemittanceOp) GetBalance(ctx context.Context) (*BalanceResponse, error)
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return nil, errors.New(fmt.Sprintf("response code: %d with error %s", res.StatusCode, string(res.Body)))
+		return nil, fmt.Errorf("response code: %d with error %s", res.StatusCode, string(res.Body))
 	}
 
 	balance := &BalanceResponse{}
@@ -50,8 +53,9 @@ func (c *RemittanceOp) GetBalance(ctx context.Context) (*BalanceResponse, error)
 	return balance, nil
 }
 
-func (c *RemittanceOp) IsPayeeActive(ctx context.Context, mobileNumber string) (bool, error) {
-	urlStr := fmt.Sprintf("%s/%s/active", RemittancesIsAccountActiveURl, mobileNumber)
+// IsPayeeActive checks if an account holder is registered and active in the system
+func (c *RemittanceServiceOp) IsPayeeActive(ctx context.Context, mobileNumber string) (bool, error) {
+	urlStr := fmt.Sprintf("%s/%s/active", remittancesIsAccountActiveURL, mobileNumber)
 	req, err := c.client.NewRequest(ctx, http.MethodGet, urlStr, nil)
 	if err != nil {
 		return false, err
@@ -63,15 +67,16 @@ func (c *RemittanceOp) IsPayeeActive(ctx context.Context, mobileNumber string) (
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return false, errors.New(fmt.Sprintf("response code: %d with error %s", res.StatusCode, string(res.Body)))
+		return false, fmt.Errorf("response code: %d with error %s", res.StatusCode, string(res.Body))
 	}
 
 	return true, nil
 }
 
-func (c *RemittanceOp) GetToken(ctx context.Context, apiKey, userID string) (string, error) {
+// GetToken creates an access token which can then be used to authorize and authenticate towards the other end-points of the Remittance API
+func (c *RemittanceServiceOp) GetToken(ctx context.Context, apiKey, userID string) (string, error) {
 
-	req, err := c.client.NewRequest(ctx, http.MethodPost, RemittancesTokenURL, nil)
+	req, err := c.client.NewRequest(ctx, http.MethodPost, remittancesTokenURL, nil)
 	if err != nil {
 		return "", err
 	}
@@ -91,12 +96,13 @@ func (c *RemittanceOp) GetToken(ctx context.Context, apiKey, userID string) (str
 	return token.AccessToken, nil
 }
 
-func (c *RemittanceOp) Transfer(ctx context.Context, mobile string, amount int64, id, payeeNote, payerMessage, currency string) (string, error) {
+// Transfer operation is used to transfer an amount from the owner’s account to a payee account.
+func (c *RemittanceServiceOp) Transfer(ctx context.Context, mobile string, amount int64, id, payeeNote, payerMessage, currency string) (string, error) {
 	if c.client.Environment == "sandbox" {
 		currency = "EUR"
 	}
 
-	requestBody := TransferRequestBody{
+	requestBody := transferRequestBody{
 		Amount:     amount,
 		Currency:   currency,
 		ExternalID: id,
@@ -108,7 +114,7 @@ func (c *RemittanceOp) Transfer(ctx context.Context, mobile string, amount int64
 		PayeeNote:    payeeNote,
 	}
 
-	req, err := c.client.NewRequest(ctx, http.MethodPost, RemittancesTransferURL, requestBody)
+	req, err := c.client.NewRequest(ctx, http.MethodPost, remittancesTransferURL, requestBody)
 	if err != nil {
 		return "", err
 	}
@@ -119,14 +125,15 @@ func (c *RemittanceOp) Transfer(ctx context.Context, mobile string, amount int64
 	}
 
 	if res.StatusCode != http.StatusAccepted {
-		return "", errors.New(fmt.Sprintf("response code: %d with error %s", res.StatusCode, string(res.Body)))
+		return "", fmt.Errorf("response code: %d with error %s", res.StatusCode, string(res.Body))
 	}
 
 	return req.Header.Get("X-Reference-Id"), nil
 }
 
-func (c *RemittanceOp) GetTransfer(ctx context.Context, transferID string) (*PaymentStatusResponse, error) {
-	urlStr := fmt.Sprintf("%s/%s", RemittancesTransferURL, transferID)
+// GetTransfer retrieves transfer information using the transactionId returned by Transfer
+func (c *RemittanceServiceOp) GetTransfer(ctx context.Context, transferID string) (*PaymentStatusResponse, error) {
+	urlStr := fmt.Sprintf("%s/%s", remittancesTransferURL, transferID)
 	req, err := c.client.NewRequest(ctx, http.MethodGet, urlStr, nil)
 	if err != nil {
 		return nil, err
@@ -138,7 +145,7 @@ func (c *RemittanceOp) GetTransfer(ctx context.Context, transferID string) (*Pay
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return nil, errors.New(fmt.Sprintf("response code: %d with error %s", res.StatusCode, string(res.Body)))
+		return nil, fmt.Errorf("response code: %d with error %s", res.StatusCode, string(res.Body))
 	}
 
 	status := &PaymentStatusResponse{}

@@ -3,26 +3,28 @@ package momo
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 )
 
-type SandboxOp struct {
+// SandboxService handles communication with sandbox related methods of the Momo API
+type SandboxService interface {
+	CreateSandboxUser(callbackHost string) (string, error)
+	GenerateSandboxUserAPIKey(referenceID string) (*APIKeyResponse, error)
+}
+
+// SandboxServiceOp handles communication with methods on Momo API to create Sandbox users
+type SandboxServiceOp struct {
 	client *Client
 }
 
-type SandboxService interface {
-	CreateSandboxUser(callbackHost string) (string, error)
-	GenerateSandboxUserAPIKey(referenceId string) (*APIKeyResponse, error)
-}
-
+// APIKeyResponse structure for returning API Key
 type APIKeyResponse struct {
 	APIKey string `json:"apiKey"`
 }
 
-// create  user
-func (c *SandboxOp) CreateSandboxUser(callbackHost string) (string, error) {
+// CreateSandboxUser creates a user to test the Momo APU in a sandbox environment
+func (c *SandboxServiceOp) CreateSandboxUser(callbackHost string) (string, error) {
 	ctx := context.Background()
 	body := map[string]string{
 		"providerCallbackHost": callbackHost,
@@ -37,14 +39,14 @@ func (c *SandboxOp) CreateSandboxUser(callbackHost string) (string, error) {
 	}
 
 	if response.StatusCode != http.StatusCreated {
-		return "", errors.New(fmt.Sprintf("returned with status %d", response.StatusCode))
+		return "", fmt.Errorf("response code: %d with error %s", response.StatusCode, string(response.Body))
 	}
 	return response.ReferenceID, nil
 }
 
-// create user API key
-func (c *SandboxOp) GenerateSandboxUserAPIKey(referenceId string) (*APIKeyResponse, error) {
-	urlStr := fmt.Sprintf("v1_0/apiuser/%s/apikey", referenceId)
+// GenerateSandboxUserAPIKey is used to create an API key for an API user in the sandbox target environment
+func (c *SandboxServiceOp) GenerateSandboxUserAPIKey(referenceID string) (*APIKeyResponse, error) {
+	urlStr := fmt.Sprintf("v1_0/apiuser/%s/apikey", referenceID)
 	ctx := context.Background()
 	req, err := c.client.NewRequest(ctx, http.MethodPost, urlStr, nil)
 	if err != nil {
@@ -56,7 +58,7 @@ func (c *SandboxOp) GenerateSandboxUserAPIKey(referenceId string) (*APIKeyRespon
 	}
 
 	if response.StatusCode != http.StatusCreated {
-		return nil, errors.New(fmt.Sprintf("returned with status %d", response.StatusCode))
+		return nil, fmt.Errorf("response code: %d with error %s", response.StatusCode, string(response.Body))
 	}
 
 	keyResponse := &APIKeyResponse{}
@@ -66,4 +68,3 @@ func (c *SandboxOp) GenerateSandboxUserAPIKey(referenceId string) (*APIKeyRespon
 	}
 	return keyResponse, nil
 }
-

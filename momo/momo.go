@@ -15,6 +15,7 @@ const (
 	mediaType = "application/json"
 )
 
+// Client manages communication with MTN Momo API.
 type Client struct {
 	client          *http.Client
 	BaseURL         *url.URL
@@ -27,6 +28,7 @@ type Client struct {
 	Sandbox         SandboxService
 }
 
+// Response returned by API calls
 type Response struct {
 	StatusCode  int
 	Body        []byte
@@ -37,9 +39,10 @@ type Response struct {
 type tokenResponse struct {
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
-	ExpiresIn   int64 `json:"expires_in"`
+	ExpiresIn   int64  `json:"expires_in"`
 }
 
+// BalanceResponse holds the account Balance
 type BalanceResponse struct {
 	AvailableBalance string `json:"availableBalance"`
 	Currency         string `json:"currency"`
@@ -50,7 +53,7 @@ type paymentDetails struct {
 	PartyID     string `json:"partyId"`
 }
 
-type PaymentRequestBody struct {
+type paymentRequestBody struct {
 	Amount       int64          `json:"amount"`
 	Currency     string         `json:"currency"`
 	ExternalID   string         `json:"externalId"`
@@ -59,7 +62,7 @@ type PaymentRequestBody struct {
 	PayeeNote    string         `json:"payeeNote"`
 }
 
-type TransferRequestBody struct {
+type transferRequestBody struct {
 	Amount       int64          `json:"amount"`
 	Currency     string         `json:"currency"`
 	ExternalID   string         `json:"externalId"`
@@ -68,11 +71,12 @@ type TransferRequestBody struct {
 	PayeeNote    string         `json:"payeeNote"`
 }
 
-type Reason struct {
+type reason struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
 }
 
+// PaymentStatusResponse returned for every successful call to make a transfer
 type PaymentStatusResponse struct {
 	Amount                 string         `json:"amount,omitempty"`
 	Currency               string         `json:"currency,omitempty"`
@@ -83,6 +87,8 @@ type PaymentStatusResponse struct {
 	Reason                 string         `json:"reason,omitempty"`
 }
 
+// NewRequest creates an API request. A relative URL can be provided in urlStr, which will be resolved to the
+// BaseURL of the Client.
 func (c *Client) NewRequest(ctx context.Context, method, urlStr string, body interface{}) (*http.Request, error) {
 	u, err := c.BaseURL.Parse(urlStr)
 	if err != nil {
@@ -102,6 +108,8 @@ func (c *Client) NewRequest(ctx context.Context, method, urlStr string, body int
 		return nil, err
 	}
 
+	req.WithContext(ctx)
+
 	req.Header.Add("Content-Type", mediaType)
 	req.Header.Add("X-Reference-Id", uuid.New().String())
 	req.Header.Add("Ocp-Apim-Subscription-Key", c.SubscriptionKey)
@@ -116,6 +124,7 @@ func (c *Client) NewRequest(ctx context.Context, method, urlStr string, body int
 	return req, nil
 }
 
+// Do sends an API request and returns the API response.
 func (c *Client) Do(ctx context.Context, req *http.Request) (*Response, error) {
 	req.WithContext(ctx)
 	res, err := c.client.Do(req)
@@ -142,8 +151,10 @@ func buildResponse(res *http.Response) (*Response, error) {
 	return &response, err
 }
 
-func NewClient(key, environment, baseUrl string) *Client {
-	urlStr, err := url.Parse(baseUrl)
+// NewClient returns a new Momo API client, using the given
+// http.Client to perform all requests.
+func NewClient(key, environment, baseURL string) *Client {
+	urlStr, err := url.Parse(baseURL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -155,7 +166,7 @@ func NewClient(key, environment, baseUrl string) *Client {
 		Environment:     environment,
 	}
 	c.Collection = &CollectionServiceOp{client: c}
-	c.Disbursement = &DisbursementOp{client: c}
-	c.Remittance = &RemittanceOp{client: c}
+	c.Disbursement = &DisbursementServiceOp{client: c}
+	c.Remittance = &RemittanceServiceOp{client: c}
 	return c
 }

@@ -10,12 +10,14 @@
   <br>
 </div>
 
+[![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/momo-api-developers/)
+
 # Usage
 
 ## Installation
 
 ```bash
- $ go get -u github.com/phillipahereza/mtnmomo
+ $ go get -u github.com/phillipahereza/momoapi-go
 ```
 
 # Sandbox Environment
