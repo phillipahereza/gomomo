@@ -76,7 +76,7 @@ func main() {
 
 	ctx := context.Background()
 
-	client := momo.NewClient(collectionPK, "sandbox", "https://sandbox.momodeveloper.mtn.com/")
+	client := gomomo.NewClient(collectionPK, "sandbox", "https://sandbox.momodeveloper.mtn.com/")
 	_, err := client.Collection.GetToken(ctx, apiKey, userID)
 	if err != nil {
 		log.Fatal(err)
@@ -133,7 +133,7 @@ func main() {
 
 	ctx := context.Background()
 
-	disbursementClient := momo.NewClient(disbursementPK, "sandbox", "https://sandbox.momodeveloper.mtn.com/")
+	disbursementClient := gomomo.NewClient(disbursementPK, "sandbox", "https://sandbox.momodeveloper.mtn.com/")
 	_, err := disbursementClient.Disbursement.GetToken(ctx, apiKey, userID)
 	if err != nil {
 		log.Fatal(err)
@@ -189,7 +189,7 @@ func main() {
 
 	ctx := context.Background()
 
-	remittanceClient := momo.NewClient(remittancePK, "sandbox", "https://sandbox.momodeveloper.mtn.com/")
+	remittanceClient := gomomo.NewClient(remittancePK, "sandbox", "https://sandbox.momodeveloper.mtn.com/")
 	_, err := remittanceClient.Remittance.GetToken(ctx, apiKey, userID)
 	if err != nil {
 		log.Fatal(err)
