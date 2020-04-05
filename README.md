@@ -10,6 +10,7 @@
   <br>
 </div>
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/phillipahereza/momoapi-go)](https://goreportcard.com/badge/github.com/phillipahereza/momoapi-go)
 [![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/momo-api-developers/)
 
 # Usage
