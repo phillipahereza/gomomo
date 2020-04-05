@@ -69,18 +69,18 @@ func TestCollectionServiceOp_RequestToPay(t *testing.T) {
 func TestCollectionServiceOp_GetTransaction(t *testing.T) {
 	setup()
 	defer teardown()
-	
+
 	expectedStatus := PaymentStatusResponse{
 		Amount:                 "500",
 		Currency:               "UGX",
 		FinancialTransactionID: 2312,
 		ExternalID:             "3232",
-		Payer:                  paymentDetails{
+		Payer: paymentDetails{
 			PartyIDType: "MSISDN",
 			PartyID:     "4656473839",
 		},
-		Status:                 "SUCCESSFUL",
-		Reason:                 "",
+		Status: "SUCCESSFUL",
+		Reason: "",
 	}
 
 	transactionID := "6c6eb16c-8b34-4d5d-bd41-2a9303f65075"
