@@ -18,7 +18,7 @@
 ## Installation
 
 ```bash
- $ go get -u github.com/phillipahereza/momoapi-go
+ $ go get -u github.com/phillipahereza/gomomo
 ```
 
 # Sandbox Environment
@@ -29,7 +29,7 @@ Next, we need to get the `User ID` and `User Secret` and to do this we shall nee
 It assumes you have created an account on `https://momodeveloper.mtn.com` and have your `Ocp-Apim-Subscription-Key`. 
 
 ```bash
-$ momoapi sandbox -callback http://ahereza.dev -key 0d31d966e5674a999c82772aa95f2cca
+$ momocli sandbox -callback http://ahereza.dev -key 0d31d966e5674a999c82772aa95f2cca
 ```
 
 The `providerCallBackHost` is your callback host and `Ocp-Apim-Subscription-Key` is your API key for the specific product to which you are subscribed. 

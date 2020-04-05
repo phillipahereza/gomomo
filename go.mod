@@ -1,4 +1,4 @@
-module github.com/phillipahereza/momoapi-go
+module github.com/phillipahereza/gomomo
 
 go 1.12
 
