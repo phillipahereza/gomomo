@@ -168,5 +168,6 @@ func NewClient(key, environment, baseURL string) *Client {
 	c.Collection = &CollectionServiceOp{client: c}
 	c.Disbursement = &DisbursementServiceOp{client: c}
 	c.Remittance = &RemittanceServiceOp{client: c}
+	c.Sandbox = &SandboxServiceOp{client: c}
 	return c
 }
