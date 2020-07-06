@@ -78,6 +78,9 @@ func main() {
 	ctx := context.Background()
 
 	client := gomomo.NewClient(collectionPK, "sandbox", "https://sandbox.momodeveloper.mtn.com/")
+
+	// Calling GetToken fetches an access token and sets it onto the client
+	// All subsequent calls using the same client will be automatically set with the Authorization header using this token
 	_, err := client.Collection.GetToken(ctx, apiKey, userID)
 	if err != nil {
 		log.Fatal(err)
